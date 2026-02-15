@@ -1,0 +1,19 @@
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    """Configuration for beat-books-api gateway."""
+
+    # Service URLs (for HTTP-based communication)
+    DATA_SERVICE_URL: str = "http://localhost:8001"
+    MODEL_SERVICE_URL: str = "http://localhost:8002"
+
+    # App
+    API_HOST: str = "0.0.0.0"
+    API_PORT: int = 8000
+    LOG_LEVEL: str = "INFO"
+
+    model_config = {"env_file": ".env"}
+
+
+settings = Settings()
