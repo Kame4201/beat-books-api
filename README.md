@@ -12,11 +12,26 @@ This is a thin routing layer with no business logic.
 
 ## Quick Start
 
+### Local Development
+
 ```bash
 pip install -r requirements.txt
 cp .env.example .env
 uvicorn src.main:app --reload --port 8000
 # Swagger docs at http://localhost:8000/docs
+```
+
+### Docker
+
+```bash
+# Build the image
+docker build -t beat-books-api .
+
+# Run the container
+docker run -p 8000:8000 beat-books-api
+
+# Health check
+curl http://localhost:8000/
 ```
 
 ## Endpoints
