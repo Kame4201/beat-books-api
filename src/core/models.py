@@ -1,4 +1,5 @@
 """Response models for consistent API responses."""
+
 from typing import Generic, TypeVar, Optional
 from pydantic import BaseModel
 

@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, AsyncMock, MagicMock
 from fastapi import status
 import httpx
 
@@ -12,7 +12,7 @@ class TestPredictEndpoint:
     async def test_predict_game_success(self, mock_get, client):
         """Test successful game prediction."""
         # Mock response from beat-books-model service
-        mock_response = AsyncMock()
+        mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "home_team": "chiefs",
@@ -26,7 +26,7 @@ class TestPredictEndpoint:
             "recommended_bet_size": 0.025,
             "bet_recommendation": "BET"
         }
-        mock_response.raise_for_status = AsyncMock()
+        mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
 
         # Make request
@@ -91,7 +91,7 @@ class TestPredictEndpoint:
     def test_predict_game_case_insensitive(self, client):
         """Test that team names are case-insensitive."""
         with patch("httpx.AsyncClient.get") as mock_get:
-            mock_response = AsyncMock()
+            mock_response = MagicMock()
             mock_response.status_code = 200
             mock_response.json.return_value = {
                 "home_team": "chiefs",
@@ -105,7 +105,7 @@ class TestPredictEndpoint:
                 "recommended_bet_size": 0.025,
                 "bet_recommendation": "BET"
             }
-            mock_response.raise_for_status = AsyncMock()
+            mock_response.raise_for_status = MagicMock()
             mock_get.return_value = mock_response
 
             # Test with uppercase
@@ -120,7 +120,7 @@ class TestBacktestEndpoint:
     @pytest.mark.asyncio
     async def test_get_backtest_results_success(self, mock_get, client):
         """Test successful backtest results retrieval."""
-        mock_response = AsyncMock()
+        mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "run_id": "test-run-123",
@@ -133,7 +133,7 @@ class TestBacktestEndpoint:
             "roi": 0.125,
             "sharpe_ratio": 1.8
         }
-        mock_response.raise_for_status = AsyncMock()
+        mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
 
         response = client.get("/predictions/backtest/test-run-123")
@@ -148,11 +148,11 @@ class TestBacktestEndpoint:
     @pytest.mark.asyncio
     async def test_get_backtest_results_not_found(self, mock_get, client):
         """Test backtest results retrieval when run_id doesn't exist."""
-        mock_response = AsyncMock()
+        mock_response = MagicMock()
         mock_response.status_code = 404
         mock_response.text = "Not found"
         mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
-            "Not found", request=AsyncMock(), response=mock_response
+            "Not found", request=MagicMock(), response=mock_response
         )
         mock_get.return_value = mock_response
 
@@ -180,7 +180,7 @@ class TestModelsEndpoint:
     @pytest.mark.asyncio
     async def test_list_models_success(self, mock_get, client):
         """Test successful models list retrieval."""
-        mock_response = AsyncMock()
+        mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "models": [
@@ -202,7 +202,7 @@ class TestModelsEndpoint:
                 }
             ]
         }
-        mock_response.raise_for_status = AsyncMock()
+        mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
 
         response = client.get("/predictions/models")
@@ -218,10 +218,10 @@ class TestModelsEndpoint:
     @pytest.mark.asyncio
     async def test_list_models_empty(self, mock_get, client):
         """Test models list retrieval when no models exist."""
-        mock_response = AsyncMock()
+        mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"models": []}
-        mock_response.raise_for_status = AsyncMock()
+        mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
 
         response = client.get("/predictions/models")

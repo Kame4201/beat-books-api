@@ -9,9 +9,7 @@ router = APIRouter()
 @router.get("/teams/{team}/stats")
 async def get_team_stats(team: str, season: int = Query(..., ge=1920, le=2100)):
     """Get team statistics. Delegates to beat-books-data."""
-    result = await data_client.get(
-        f"/stats/teams/{team}", params={"season": season}
-    )
+    result = await data_client.get(f"/stats/teams/{team}", params={"season": season})
     return result
 
 
@@ -23,7 +21,7 @@ async def get_players(
     limit: int = Query(50, ge=1, le=200),
 ):
     """Get player statistics with filtering. Delegates to beat-books-data."""
-    params = {"season": season, "page": page, "limit": limit}
+    params: dict[str, int | str] = {"season": season, "page": page, "limit": limit}
     if position:
         params["position"] = position.value
 

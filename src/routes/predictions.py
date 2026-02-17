@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 from typing import Optional, List, Literal
 import httpx
 from src.core.config import settings
@@ -8,16 +8,45 @@ router = APIRouter()
 
 # Valid NFL team abbreviations (32 teams)
 VALID_NFL_TEAMS = {
-    "cardinals", "falcons", "ravens", "bills", "panthers", "bears", "bengals", "browns",
-    "cowboys", "broncos", "lions", "packers", "texans", "colts", "jaguars", "chiefs",
-    "raiders", "chargers", "rams", "dolphins", "vikings", "patriots", "saints", "giants",
-    "jets", "eagles", "steelers", "49ers", "seahawks", "buccaneers", "titans", "commanders"
+    "cardinals",
+    "falcons",
+    "ravens",
+    "bills",
+    "panthers",
+    "bears",
+    "bengals",
+    "browns",
+    "cowboys",
+    "broncos",
+    "lions",
+    "packers",
+    "texans",
+    "colts",
+    "jaguars",
+    "chiefs",
+    "raiders",
+    "chargers",
+    "rams",
+    "dolphins",
+    "vikings",
+    "patriots",
+    "saints",
+    "giants",
+    "jets",
+    "eagles",
+    "steelers",
+    "49ers",
+    "seahawks",
+    "buccaneers",
+    "titans",
+    "commanders",
 }
 
 
 # Response Models
 class PredictionResponse(BaseModel):
     """Response model for game prediction."""
+
     home_team: str
     away_team: str
     home_win_probability: float = Field(..., ge=0.0, le=1.0)
@@ -32,6 +61,7 @@ class PredictionResponse(BaseModel):
 
 class BacktestResponse(BaseModel):
     """Response model for backtest results."""
+
     run_id: str
     start_date: str
     end_date: str
@@ -45,6 +75,7 @@ class BacktestResponse(BaseModel):
 
 class ModelInfo(BaseModel):
     """Response model for model information."""
+
     model_id: str
     model_version: str
     feature_version: str
@@ -55,6 +86,7 @@ class ModelInfo(BaseModel):
 
 class ModelsListResponse(BaseModel):
     """Response model for list of models."""
+
     models: List[ModelInfo]
 
 
@@ -64,7 +96,7 @@ def validate_team_name(team: str) -> str:
     if normalized not in VALID_NFL_TEAMS:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid team name: '{team}'. Must be a valid NFL team abbreviation (e.g., chiefs, eagles, patriots)."
+            detail=f"Invalid team name: '{team}'. Must be a valid NFL team abbreviation (e.g., chiefs, eagles, patriots).",
         )
     return normalized
 
@@ -72,7 +104,7 @@ def validate_team_name(team: str) -> str:
 @router.get("/predict", response_model=PredictionResponse)
 async def predict_game(
     team1: str = Query(..., description="Home team name (NFL team abbreviation)"),
-    team2: str = Query(..., description="Away team name (NFL team abbreviation)")
+    team2: str = Query(..., description="Away team name (NFL team abbreviation)"),
 ):
     """
     Predict game outcome between two teams.
@@ -100,24 +132,23 @@ async def predict_game(
             response = await client.get(
                 f"{settings.MODEL_SERVICE_URL}/predict",
                 params={"team1": home_team, "team2": away_team},
-                timeout=10.0
+                timeout=10.0,
             )
             response.raise_for_status()
             return response.json()
     except httpx.ConnectError:
         raise HTTPException(
             status_code=503,
-            detail="Model service unavailable. Please ensure beat-books-model is running."
+            detail="Model service unavailable. Please ensure beat-books-model is running.",
         )
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
-            detail=f"Model service error: {e.response.text}"
+            detail=f"Model service error: {e.response.text}",
         )
     except httpx.TimeoutException:
         raise HTTPException(
-            status_code=504,
-            detail="Model service timeout. Request took too long."
+            status_code=504, detail="Model service timeout. Request took too long."
         )
 
 
@@ -141,30 +172,27 @@ async def get_backtest_results(run_id: str):
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{settings.MODEL_SERVICE_URL}/backtest/{run_id}",
-                timeout=10.0
+                f"{settings.MODEL_SERVICE_URL}/backtest/{run_id}", timeout=10.0
             )
             response.raise_for_status()
             return response.json()
     except httpx.ConnectError:
         raise HTTPException(
             status_code=503,
-            detail="Model service unavailable. Please ensure beat-books-model is running."
+            detail="Model service unavailable. Please ensure beat-books-model is running.",
         )
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:
             raise HTTPException(
-                status_code=404,
-                detail=f"Backtest run '{run_id}' not found."
+                status_code=404, detail=f"Backtest run '{run_id}' not found."
             )
         raise HTTPException(
             status_code=e.response.status_code,
-            detail=f"Model service error: {e.response.text}"
+            detail=f"Model service error: {e.response.text}",
         )
     except httpx.TimeoutException:
         raise HTTPException(
-            status_code=504,
-            detail="Model service timeout. Request took too long."
+            status_code=504, detail="Model service timeout. Request took too long."
         )
 
 
@@ -184,23 +212,21 @@ async def list_models():
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{settings.MODEL_SERVICE_URL}/models",
-                timeout=10.0
+                f"{settings.MODEL_SERVICE_URL}/models", timeout=10.0
             )
             response.raise_for_status()
             return response.json()
     except httpx.ConnectError:
         raise HTTPException(
             status_code=503,
-            detail="Model service unavailable. Please ensure beat-books-model is running."
+            detail="Model service unavailable. Please ensure beat-books-model is running.",
         )
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
-            detail=f"Model service error: {e.response.text}"
+            detail=f"Model service error: {e.response.text}",
         )
     except httpx.TimeoutException:
         raise HTTPException(
-            status_code=504,
-            detail="Model service timeout. Request took too long."
+            status_code=504, detail="Model service timeout. Request took too long."
         )

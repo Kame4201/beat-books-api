@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     MODEL_SERVICE_URL: str = "http://localhost:8002"
 
     # App
-    API_HOST: str = "0.0.0.0"
+    API_HOST: str = "0.0.0.0"  # nosec B104 - intentional for containerized deployment
     API_PORT: int = 8000
     LOG_LEVEL: str = "INFO"
 
