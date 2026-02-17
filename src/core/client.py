@@ -1,4 +1,5 @@
 """HTTP client for communicating with beat-books-data service."""
+
 import httpx
 from typing import Optional, Dict, Any
 from fastapi import HTTPException

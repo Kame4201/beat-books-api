@@ -1,4 +1,5 @@
 """Enums for API validation."""
+
 from enum import Enum
 
 
