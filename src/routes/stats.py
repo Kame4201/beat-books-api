@@ -23,7 +23,7 @@ async def get_players(
     limit: int = Query(50, ge=1, le=200),
 ):
     """Get player statistics with filtering. Delegates to beat-books-data."""
-    params = {"season": season, "page": page, "limit": limit}
+    params: dict[str, int | str] = {"season": season, "page": page, "limit": limit}
     if position:
         params["position"] = position.value
 
