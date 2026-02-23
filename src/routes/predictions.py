@@ -3,44 +3,9 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Literal
 import httpx
 from src.core.config import settings
+from src.core.teams import VALID_NFL_TEAMS
 
 router = APIRouter()
-
-# Valid NFL team abbreviations (32 teams)
-VALID_NFL_TEAMS = {
-    "cardinals",
-    "falcons",
-    "ravens",
-    "bills",
-    "panthers",
-    "bears",
-    "bengals",
-    "browns",
-    "cowboys",
-    "broncos",
-    "lions",
-    "packers",
-    "texans",
-    "colts",
-    "jaguars",
-    "chiefs",
-    "raiders",
-    "chargers",
-    "rams",
-    "dolphins",
-    "vikings",
-    "patriots",
-    "saints",
-    "giants",
-    "jets",
-    "eagles",
-    "steelers",
-    "49ers",
-    "seahawks",
-    "buccaneers",
-    "titans",
-    "commanders",
-}
 
 
 # Response Models
