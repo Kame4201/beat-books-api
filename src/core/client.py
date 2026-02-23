@@ -4,6 +4,7 @@ import httpx
 from typing import Optional, Dict, Any
 from fastapi import HTTPException
 from src.core.config import settings
+from src.core.circuit_breaker import CircuitBreaker
 
 
 class DataServiceClient:
@@ -12,6 +13,7 @@ class DataServiceClient:
     def __init__(self):
         self.base_url = settings.DATA_SERVICE_URL
         self.timeout = 30.0
+        self.circuit_breaker = CircuitBreaker()
 
     async def _make_request(
         self,
@@ -21,6 +23,17 @@ class DataServiceClient:
         json_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Make HTTP request to data service."""
+        if not self.circuit_breaker.allow_request():
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "error": {
+                        "code": "CIRCUIT_OPEN",
+                        "message": "Data service circuit breaker is open. Service appears to be down.",
+                    }
+                },
+            )
+
         url = f"{self.base_url}{endpoint}"
 
         try:
@@ -29,16 +42,19 @@ class DataServiceClient:
                     method=method, url=url, params=params, json=json_data
                 )
                 response.raise_for_status()
+                self.circuit_breaker.record_success()
                 return response.json()
 
         except httpx.HTTPStatusError as e:
-            # Forward the error from the data service
+            # Don't trip circuit breaker on client errors (4xx)
+            if e.response.status_code >= 500:
+                self.circuit_breaker.record_failure()
             raise HTTPException(
                 status_code=e.response.status_code,
                 detail=e.response.json() if e.response.text else {"error": str(e)},
             )
         except httpx.RequestError as e:
-            # Connection errors, timeouts, etc.
+            self.circuit_breaker.record_failure()
             raise HTTPException(
                 status_code=503,
                 detail={
