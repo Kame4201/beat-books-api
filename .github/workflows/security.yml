@@ -30,9 +30,9 @@ jobs:
             ${{ runner.os }}-pip-security-
             ${{ runner.os }}-pip-
 
-      - name: Install security tools
+      - name: Install dependencies
         run: |
-          pip install bandit pip-audit
+          pip install -r requirements-dev.txt
 
       - name: Run bandit security scan
         run: |
