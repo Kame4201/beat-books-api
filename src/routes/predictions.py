@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List, Literal
 import httpx
 from src.core.config import settings
 from src.core.teams import VALID_NFL_TEAMS
+from src.core.rate_limit import limiter
 
 router = APIRouter()
 
@@ -67,7 +68,9 @@ def validate_team_name(team: str) -> str:
 
 
 @router.get("/predict", response_model=PredictionResponse)
+@limiter.limit(settings.RATE_LIMIT_PREDICTIONS)
 async def predict_game(
+    request: Request,
     team1: str = Query(..., description="Home team name (NFL team abbreviation)"),
     team2: str = Query(..., description="Away team name (NFL team abbreviation)"),
 ):

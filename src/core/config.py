@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     # CORS
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000"]
 
+    # Rate Limiting
+    RATE_LIMIT_DEFAULT: str = "100/minute"
+    RATE_LIMIT_PREDICTIONS: str = "20/minute"
+
     model_config = {"env_file": ".env"}
 
 
