@@ -3,6 +3,7 @@ uvicorn
 httpx
 pydantic
 pydantic-settings
+prometheus-fastapi-instrumentator
 pytest
 pytest-asyncio
 pytest-cov
