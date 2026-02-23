@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     # CORS
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000"]
 
+    # Authentication
+    API_KEYS: str = ""  # Comma-separated list of valid API keys
+
     model_config = {"env_file": ".env"}
 
 
