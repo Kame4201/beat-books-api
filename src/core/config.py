@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     API_PORT: int = 8000
     LOG_LEVEL: str = "INFO"
 
+    # CORS
+    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000"]
+
     model_config = {"env_file": ".env"}
 
 
