@@ -19,10 +19,13 @@ class LogCapture(logging.Handler):
 def capture_logs():
     """Attach a capture handler to the beat-books-api logger."""
     api_logger = logging.getLogger("beat-books-api")
+    previous_level = api_logger.level
     handler = LogCapture()
+    api_logger.setLevel(logging.INFO)
     api_logger.addHandler(handler)
     yield handler
     api_logger.removeHandler(handler)
+    api_logger.setLevel(previous_level)
 
 
 class TestRequestLoggingMiddleware:
