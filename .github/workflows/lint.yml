@@ -27,9 +27,9 @@ jobs:
             ${{ runner.os }}-pip-lint-
             ${{ runner.os }}-pip-
 
-      - name: Install linting tools
+      - name: Install dependencies
         run: |
-          pip install ruff black
+          pip install -r requirements-dev.txt
 
       - name: Run ruff
         run: |
