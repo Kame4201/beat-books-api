@@ -59,6 +59,10 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             "client_ip": request.client.host if request.client else None,
         }
 
+        # Keep middleware logs compatible with pytest's log capture (caplog),
+        # which captures records via the root logger handler.
+        logger.propagate = True
+
         logger.info(
             "%s %s %s %sms",
             request.method,
