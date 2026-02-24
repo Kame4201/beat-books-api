@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.routes import health, scrape, stats, predictions
 from src.core.config import settings
 from src.core.auth import APIKeyMiddleware
+from src.core.logging import RequestLoggingMiddleware, setup_logging
+
+setup_logging()
 
 app = FastAPI(
     title="BeatTheBooks API",
@@ -21,6 +24,9 @@ app.add_middleware(
 
 # Authentication middleware
 app.add_middleware(APIKeyMiddleware)
+
+# Request/response logging middleware
+app.add_middleware(RequestLoggingMiddleware)
 
 # Register route modules
 app.include_router(health.router, tags=["Health"])
