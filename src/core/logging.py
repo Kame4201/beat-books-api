@@ -14,7 +14,8 @@ logger = logging.getLogger("beat-books-api")
 def setup_logging() -> None:
     """Configure structured JSON logging."""
     root_logger = logging.getLogger("beat-books-api")
-    root_logger.setLevel(getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO))
+    configured_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
+    root_logger.setLevel(min(configured_level, logging.INFO))
     root_logger.disabled = False
 
     if not any(getattr(h, "_beat_books_handler", False) for h in root_logger.handlers):
@@ -23,7 +24,7 @@ def setup_logging() -> None:
         handler._beat_books_handler = True  # type: ignore[attr-defined]
         root_logger.addHandler(handler)
 
-    root_logger.propagate = False
+    root_logger.propagate = True
 
 
 class JSONFormatter(logging.Formatter):
