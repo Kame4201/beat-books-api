@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     API_PORT: int = 8000
     LOG_LEVEL: str = "INFO"
 
+    # Circuit breaker
+    CB_FAILURE_THRESHOLD: int = 5
+    CB_RESET_TIMEOUT: float = 30.0
+
     model_config = {"env_file": ".env"}
 
 
