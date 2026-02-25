@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     RATE_LIMIT_DEFAULT: str = "100/minute"
     RATE_LIMIT_PREDICTIONS: str = "20/minute"
 
+    # Authentication
+    API_KEYS: str = ""  # Comma-separated list of valid API keys
+
     model_config = {"env_file": ".env"}
 
 

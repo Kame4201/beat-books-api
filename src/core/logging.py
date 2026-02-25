@@ -9,6 +9,9 @@ from starlette.responses import Response
 from src.core.config import settings
 
 logger = logging.getLogger("beat-books-api")
+logger.setLevel(logging.DEBUG)
+
+SENSITIVE_HEADERS = {"authorization", "cookie", "x-api-key"}
 
 
 def setup_logging() -> None:

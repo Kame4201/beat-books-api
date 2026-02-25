@@ -5,6 +5,8 @@ from slowapi.errors import RateLimitExceeded
 from src.core.rate_limit import limiter
 from src.routes import health, scrape, stats, predictions
 from src.core.config import settings
+from src.core.auth import APIKeyMiddleware
+from src.core.logging import RequestLoggingMiddleware
 
 app = FastAPI(
     title="BeatTheBooks API",
@@ -40,6 +42,11 @@ async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
         headers={"Retry-After": retry_after},
     )
 
+# Authentication middleware
+app.add_middleware(APIKeyMiddleware)
+
+# Request logging middleware
+app.add_middleware(RequestLoggingMiddleware)
 
 # Register route modules
 app.include_router(health.router, tags=["Health"])
