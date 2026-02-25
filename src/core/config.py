@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     CB_FAILURE_THRESHOLD: int = 5
     CB_RESET_TIMEOUT: float = 30.0
 
+    # Retry
+    RETRY_MAX_ATTEMPTS: int = 3
+    RETRY_BASE_DELAY: float = 0.1
+
     model_config = {"env_file": ".env"}
 
 
