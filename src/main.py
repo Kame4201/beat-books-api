@@ -1,8 +1,17 @@
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi.errors import RateLimitExceeded
+
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+except ModuleNotFoundError:
+    Instrumentator = None
+    logging.getLogger(__name__).info(
+        "prometheus-fastapi-instrumentator not installed — metrics endpoint disabled"
+    )
 from src.core.rate_limit import limiter
 from src.core.tracing import RequestTracingMiddleware
 from src.core.logging import RequestLoggingMiddleware
@@ -62,8 +71,9 @@ app.include_router(predictions.router, prefix="/predictions", tags=["Predictions
 app.include_router(odds.router, prefix="/odds", tags=["Odds"])
 
 # Prometheus metrics — exposes /metrics endpoint
-Instrumentator(
-    excluded_handlers=["/metrics"],
-).instrument(
-    app
-).expose(app, endpoint="/metrics", tags=["Monitoring"])
+if Instrumentator is not None:
+    Instrumentator(
+        excluded_handlers=["/metrics"],
+    ).instrument(
+        app
+    ).expose(app, endpoint="/metrics", tags=["Monitoring"])
