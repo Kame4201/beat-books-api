@@ -48,6 +48,9 @@ class TestAllRoutesDocumented:
         "/predictions/backtest/{run_id}",
         "/predictions/models",
         "/metrics",
+        "/odds/live",
+        "/odds/history/{game_id}",
+        "/odds/best",
     ]
 
     def test_all_routes_present(self, client):
