@@ -4,6 +4,20 @@ from fastapi import status
 import httpx
 
 
+SAMPLE_PREDICTION = {
+    "home_team": "chiefs",
+    "away_team": "eagles",
+    "home_win_probability": 0.62,
+    "away_win_probability": 0.38,
+    "predicted_spread": -3.5,
+    "model_version": "v1.0",
+    "feature_version": "v1.0",
+    "edge_vs_market": 0.04,
+    "recommended_bet_size": 0.025,
+    "bet_recommendation": "BET",
+}
+
+
 class TestPredictEndpoint:
     """Tests for GET /predictions/predict endpoint."""
 
@@ -240,3 +254,103 @@ class TestModelsEndpoint:
 
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
         assert "Model service unavailable" in response.json()["detail"]
+
+
+class TestBatchPredictions:
+    """Tests for POST /predictions/batch endpoint."""
+
+    @patch("httpx.AsyncClient.get")
+    @pytest.mark.asyncio
+    async def test_batch_success(self, mock_get, client):
+        """Test batch prediction with all games succeeding."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = SAMPLE_PREDICTION
+        mock_response.raise_for_status = MagicMock()
+        mock_get.return_value = mock_response
+
+        response = client.post(
+            "/predictions/batch",
+            json={"games": [{"team1": "chiefs", "team2": "eagles"}]},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] == 1
+        assert data["succeeded"] == 1
+        assert data["failed"] == 0
+        assert data["results"][0]["prediction"] is not None
+
+    @patch("httpx.AsyncClient.get")
+    @pytest.mark.asyncio
+    async def test_batch_partial_failure(self, mock_get, client):
+        """Test batch with mix of valid and invalid teams."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = SAMPLE_PREDICTION
+        mock_response.raise_for_status = MagicMock()
+        mock_get.return_value = mock_response
+
+        response = client.post(
+            "/predictions/batch",
+            json={
+                "games": [
+                    {"team1": "chiefs", "team2": "eagles"},
+                    {"team1": "invalid", "team2": "eagles"},
+                ]
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] == 2
+        assert data["succeeded"] == 1
+        assert data["failed"] == 1
+        assert data["results"][0]["prediction"] is not None
+        assert data["results"][1]["error"] is not None
+
+    def test_batch_empty_input(self, client):
+        """Test batch prediction with empty games list."""
+        response = client.post(
+            "/predictions/batch",
+            json={"games": []},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] == 0
+        assert data["succeeded"] == 0
+        assert data["failed"] == 0
+        assert data["results"] == []
+
+
+class TestWeekPredictions:
+    """Tests for GET /predictions/week/{season}/{week} endpoint."""
+
+    @patch("httpx.AsyncClient.get")
+    @pytest.mark.asyncio
+    async def test_week_predictions_success(self, mock_httpx_get, client):
+        """Test week prediction that fetches schedule and predicts."""
+        with patch(
+            "src.routes.predictions.data_client.get", new_callable=AsyncMock
+        ) as mock_data:
+            mock_data.return_value = {
+                "data": {
+                    "games": [
+                        {"home_team": "chiefs", "away_team": "eagles"},
+                    ]
+                }
+            }
+
+            predict_response = MagicMock()
+            predict_response.status_code = 200
+            predict_response.json.return_value = SAMPLE_PREDICTION
+            predict_response.raise_for_status = MagicMock()
+            mock_httpx_get.return_value = predict_response
+
+            response = client.get("/predictions/week/2024/1")
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["total"] == 1
+            assert data["succeeded"] == 1

@@ -3,5 +3,6 @@ uvicorn==0.41.0
 httpx==0.28.1
 pydantic==2.12.5
 pydantic-settings==2.13.1
+prometheus-client
 prometheus-fastapi-instrumentator
 slowapi
