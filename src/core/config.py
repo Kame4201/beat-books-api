@@ -13,6 +13,24 @@ class Settings(BaseSettings):
     API_PORT: int = 8000
     LOG_LEVEL: str = "INFO"
 
+    # CORS
+    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000"]
+
+    # Rate Limiting
+    RATE_LIMIT_DEFAULT: str = "100/minute"
+    RATE_LIMIT_PREDICTIONS: str = "20/minute"
+
+    # Authentication
+    API_KEYS: str = ""  # Comma-separated list of valid API keys
+
+    # Circuit breaker
+    CB_FAILURE_THRESHOLD: int = 5
+    CB_RESET_TIMEOUT: float = 30.0
+
+    # Retry
+    RETRY_MAX_ATTEMPTS: int = 3
+    RETRY_BASE_DELAY: float = 0.1
+
     model_config = {"env_file": ".env"}
 
 
