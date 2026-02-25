@@ -1,7 +1,6 @@
 """Tests for odds endpoints."""
-import pytest
-from unittest.mock import AsyncMock, patch
 
+from unittest.mock import AsyncMock, patch
 
 SAMPLE_ODDS_LINE = {
     "game_id": "2024-W1-KC-DET",
@@ -37,9 +36,7 @@ class TestLiveOdds:
             mock_get.return_value = {"data": []}
             response = client.get("/odds/live?sport=nfl")
             assert response.status_code == 200
-            mock_get.assert_called_once_with(
-                "/odds/live", params={"sport": "nfl"}
-            )
+            mock_get.assert_called_once_with("/odds/live", params={"sport": "nfl"})
 
     def test_get_live_odds_empty(self, client):
         with patch(
@@ -100,9 +97,7 @@ class TestBestOdds:
             mock_get.return_value = {"data": []}
             response = client.get("/odds/best?sport=nfl")
             assert response.status_code == 200
-            mock_get.assert_called_once_with(
-                "/odds/best", params={"sport": "nfl"}
-            )
+            mock_get.assert_called_once_with("/odds/best", params={"sport": "nfl"})
 
 
 class TestOddsOpenAPI:

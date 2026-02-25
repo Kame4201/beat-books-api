@@ -1,7 +1,5 @@
 """Tests for OpenAPI schema validation (issue #23)."""
 
-import pytest
-
 
 class TestOpenAPISchema:
     """Validate the OpenAPI schema structure and content."""

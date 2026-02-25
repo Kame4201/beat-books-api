@@ -1,6 +1,4 @@
 """Tests for CORS middleware configuration."""
-import pytest
-from unittest.mock import patch
 
 
 class TestCORSMiddleware:
@@ -11,7 +9,9 @@ class TestCORSMiddleware:
         response = client.get("/", headers={"Origin": "http://localhost:3000"})
 
         assert response.status_code == 200
-        assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+        assert (
+            response.headers["access-control-allow-origin"] == "http://localhost:3000"
+        )
 
     def test_cors_preflight_request(self, client):
         """Test that OPTIONS preflight requests succeed."""

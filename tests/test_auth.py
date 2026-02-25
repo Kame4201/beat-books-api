@@ -1,5 +1,5 @@
 """Tests for API key authentication middleware."""
-import pytest
+
 from unittest.mock import patch
 
 
@@ -17,8 +17,9 @@ class TestAPIKeyAuth:
         """Test that empty API_KEYS allows all requests (dev mode)."""
         with patch("src.core.auth.settings") as mock_settings:
             mock_settings.API_KEYS = ""
-            response = client.get("/teams/KC/stats?season=2024",
-                                  headers={"X-API-Key": ""})
+            response = client.get(
+                "/teams/KC/stats?season=2024", headers={"X-API-Key": ""}
+            )
             # Should not get 401/403 — auth is disabled
             assert response.status_code != 401
             assert response.status_code != 403
@@ -50,7 +51,10 @@ class TestAPIKeyAuth:
         with patch("src.core.auth.settings") as mock_settings:
             mock_settings.API_KEYS = "valid-key-123,another-key"
             from unittest.mock import AsyncMock
-            with patch("src.routes.stats.data_client.get", new_callable=AsyncMock) as mock_get:
+
+            with patch(
+                "src.routes.stats.data_client.get", new_callable=AsyncMock
+            ) as mock_get:
                 mock_get.return_value = {"data": {"team": "KC"}}
                 response = client.get(
                     "/teams/KC/stats?season=2024",
@@ -63,7 +67,10 @@ class TestAPIKeyAuth:
         with patch("src.core.auth.settings") as mock_settings:
             mock_settings.API_KEYS = "key-1,key-2,key-3"
             from unittest.mock import AsyncMock
-            with patch("src.routes.stats.data_client.get", new_callable=AsyncMock) as mock_get:
+
+            with patch(
+                "src.routes.stats.data_client.get", new_callable=AsyncMock
+            ) as mock_get:
                 mock_get.return_value = {"data": {}}
                 response = client.get(
                     "/teams/KC/stats?season=2024",

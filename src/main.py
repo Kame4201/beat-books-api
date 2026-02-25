@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import Any
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +14,14 @@ from prometheus_client import (
 from slowapi.errors import RateLimitExceeded
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from src.core.auth import APIKeyMiddleware
+from src.core.config import settings
+from src.core.logging import RequestLoggingMiddleware
+from src.core.rate_limit import limiter
+from src.core.tracing import RequestTracingMiddleware
+from src.routes import health, scrape, stats, predictions, odds
+
+Instrumentator: Any
 try:
     from prometheus_fastapi_instrumentator import Instrumentator
 except ModuleNotFoundError:
@@ -20,12 +29,6 @@ except ModuleNotFoundError:
     logging.getLogger(__name__).info(
         "prometheus-fastapi-instrumentator not installed — using fallback metrics"
     )
-from src.core.rate_limit import limiter
-from src.core.tracing import RequestTracingMiddleware
-from src.core.logging import RequestLoggingMiddleware
-from src.core.auth import APIKeyMiddleware
-from src.core.config import settings
-from src.routes import health, scrape, stats, predictions, odds
 
 app = FastAPI(
     title="BeatTheBooks API",

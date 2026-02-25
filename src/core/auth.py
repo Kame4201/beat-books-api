@@ -18,9 +18,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Get valid API keys from config
-        valid_keys = {
-            k.strip() for k in settings.API_KEYS.split(",") if k.strip()
-        }
+        valid_keys = {k.strip() for k in settings.API_KEYS.split(",") if k.strip()}
 
         # If no keys configured, skip auth (development mode)
         if not valid_keys:

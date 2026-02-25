@@ -3,7 +3,6 @@ from unittest.mock import patch, AsyncMock, MagicMock
 from fastapi import status
 import httpx
 
-
 SAMPLE_PREDICTION = {
     "home_team": "chiefs",
     "away_team": "eagles",
@@ -38,7 +37,7 @@ class TestPredictEndpoint:
             "feature_version": "v1.0",
             "edge_vs_market": 0.04,
             "recommended_bet_size": 0.025,
-            "bet_recommendation": "BET"
+            "bet_recommendation": "BET",
         }
         mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
@@ -117,7 +116,7 @@ class TestPredictEndpoint:
                 "feature_version": "v1.0",
                 "edge_vs_market": 0.04,
                 "recommended_bet_size": 0.025,
-                "bet_recommendation": "BET"
+                "bet_recommendation": "BET",
             }
             mock_response.raise_for_status = MagicMock()
             mock_get.return_value = mock_response
@@ -145,7 +144,7 @@ class TestBacktestEndpoint:
             "accuracy": 0.644,
             "total_profit": 1250.50,
             "roi": 0.125,
-            "sharpe_ratio": 1.8
+            "sharpe_ratio": 1.8,
         }
         mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
@@ -204,7 +203,7 @@ class TestModelsEndpoint:
                     "feature_version": "v1.0",
                     "trained_date": "2024-01-15",
                     "accuracy": 0.652,
-                    "is_active": True
+                    "is_active": True,
                 },
                 {
                     "model_id": "model-002",
@@ -212,8 +211,8 @@ class TestModelsEndpoint:
                     "feature_version": "v1.1",
                     "trained_date": "2024-02-01",
                     "accuracy": 0.668,
-                    "is_active": False
-                }
+                    "is_active": False,
+                },
             ]
         }
         mock_response.raise_for_status = MagicMock()

@@ -1,6 +1,5 @@
 """Tests for retry logic with exponential backoff (issue #25)."""
 
-import asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
 
 import httpx
@@ -66,9 +65,7 @@ class TestRetryOnTransientErrors:
             call_count += 1
             if call_count < 2:
                 resp = mock_502
-                raise httpx.HTTPStatusError(
-                    "502", request=MagicMock(), response=resp
-                )
+                raise httpx.HTTPStatusError("502", request=MagicMock(), response=resp)
             return mock_success
 
         with patch("src.core.client.httpx.AsyncClient") as mock_cls:
@@ -132,9 +129,7 @@ class TestNoRetryOnClientErrors:
         async def mock_request(*args, **kwargs):
             nonlocal call_count
             call_count += 1
-            raise httpx.HTTPStatusError(
-                "400", request=MagicMock(), response=mock_400
-            )
+            raise httpx.HTTPStatusError("400", request=MagicMock(), response=mock_400)
 
         with patch("src.core.client.httpx.AsyncClient") as mock_cls:
             mock_http = AsyncMock()
@@ -143,7 +138,7 @@ class TestNoRetryOnClientErrors:
             mock_http.__aexit__ = AsyncMock(return_value=False)
             mock_cls.return_value = mock_http
 
-            with pytest.raises(Exception) as exc_info:
+            with pytest.raises(Exception):
                 await retry_client._make_request("GET", "/test")
             assert call_count == 1
 
@@ -159,9 +154,7 @@ class TestNoRetryOnClientErrors:
         async def mock_request(*args, **kwargs):
             nonlocal call_count
             call_count += 1
-            raise httpx.HTTPStatusError(
-                "404", request=MagicMock(), response=mock_404
-            )
+            raise httpx.HTTPStatusError("404", request=MagicMock(), response=mock_404)
 
         with patch("src.core.client.httpx.AsyncClient") as mock_cls:
             mock_http = AsyncMock()
@@ -202,7 +195,6 @@ class TestBackoff:
     @pytest.mark.asyncio
     async def test_backoff_increases_exponentially(self, retry_client):
         delays = []
-        original_sleep = asyncio.sleep
 
         async def mock_sleep(duration):
             delays.append(duration)

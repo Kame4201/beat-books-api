@@ -1,4 +1,5 @@
 """Tests for rate limiting middleware."""
+
 import pytest
 from unittest.mock import patch, MagicMock
 
@@ -8,9 +9,7 @@ class TestRateLimiting:
 
     def test_rate_limit_handler_returns_429(self, client):
         """Test that the 429 handler is registered and returns proper format."""
-        from slowapi.errors import RateLimitExceeded
         from src.main import rate_limit_exceeded_handler
-        from fastapi import Request
 
         # Verify the handler exists and is callable
         assert callable(rate_limit_exceeded_handler)

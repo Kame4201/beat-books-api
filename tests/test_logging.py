@@ -1,4 +1,5 @@
 """Tests for structured logging middleware."""
+
 import json
 import logging
 import pytest
