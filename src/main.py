@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
-
+from src.core.tracing import RequestTracingMiddleware
 from src.routes import health, scrape, stats, predictions
 
 app = FastAPI(
@@ -8,6 +8,9 @@ app = FastAPI(
     description="NFL game prediction platform — API gateway",
     version="1.0.0",
 )
+
+# Middleware
+app.add_middleware(RequestTracingMiddleware)
 
 # Register route modules
 app.include_router(health.router, tags=["Health"])
