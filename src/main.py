@@ -1,12 +1,14 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi.errors import RateLimitExceeded
 from src.core.rate_limit import limiter
-from src.routes import health, scrape, stats, predictions
-from src.core.config import settings
-from src.core.auth import APIKeyMiddleware
+from src.core.tracing import RequestTracingMiddleware
 from src.core.logging import RequestLoggingMiddleware
+from src.core.auth import APIKeyMiddleware
+from src.core.config import settings
+from src.routes import health, scrape, stats, predictions
 
 app = FastAPI(
     title="BeatTheBooks API",
@@ -22,6 +24,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Authentication middleware
+app.add_middleware(APIKeyMiddleware)
+
+# Request/response logging middleware
+app.add_middleware(RequestLoggingMiddleware)
+
+# Request tracing middleware
+app.add_middleware(RequestTracingMiddleware)
 
 # Rate limiting
 app.state.limiter = limiter
@@ -42,14 +53,16 @@ async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
         headers={"Retry-After": retry_after},
     )
 
-# Authentication middleware
-app.add_middleware(APIKeyMiddleware)
-
-# Request logging middleware
-app.add_middleware(RequestLoggingMiddleware)
 
 # Register route modules
 app.include_router(health.router, tags=["Health"])
 app.include_router(scrape.router, prefix="/scrape", tags=["Scraping"])
 app.include_router(stats.router, tags=["Statistics"])
 app.include_router(predictions.router, prefix="/predictions", tags=["Predictions"])
+
+# Prometheus metrics — exposes /metrics endpoint
+Instrumentator(
+    excluded_handlers=["/metrics"],
+).instrument(
+    app
+).expose(app, endpoint="/metrics", tags=["Monitoring"])
