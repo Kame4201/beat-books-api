@@ -51,6 +51,8 @@ class TestAllRoutesDocumented:
         "/odds/live",
         "/odds/history/{game_id}",
         "/odds/best",
+        "/predictions/batch",
+        "/predictions/week/{season}/{week}",
     ]
 
     def test_all_routes_present(self, client):
