@@ -18,4 +18,6 @@ app.include_router(predictions.router, prefix="/predictions", tags=["Predictions
 # Prometheus metrics — exposes /metrics endpoint
 Instrumentator(
     excluded_handlers=["/metrics"],
-).instrument(app).expose(app, endpoint="/metrics", tags=["Monitoring"])
+).instrument(
+    app
+).expose(app, endpoint="/metrics", tags=["Monitoring"])
