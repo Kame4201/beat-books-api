@@ -27,9 +27,9 @@ jobs:
             ${{ runner.os }}-pip-mypy-
             ${{ runner.os }}-pip-
 
-      - name: Install mypy
+      - name: Install dependencies
         run: |
-          pip install mypy
+          pip install -r requirements-dev.txt
 
       - name: Run mypy
         run: |

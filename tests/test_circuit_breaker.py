@@ -1,7 +1,6 @@
 """Tests for circuit breaker pattern (issue #24)."""
 
 import time
-from unittest.mock import patch
 
 from src.core.circuit_breaker import CircuitBreaker, CircuitState
 

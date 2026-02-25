@@ -1,4 +1,5 @@
 """Edge case tests for API routes."""
+
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 import httpx

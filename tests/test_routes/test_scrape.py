@@ -1,4 +1,5 @@
 """E2E tests for scrape routes."""
+
 import pytest
 from unittest.mock import AsyncMock, patch
 

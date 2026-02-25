@@ -48,6 +48,26 @@ curl http://localhost:8000/
 | GET | `/standings` | beat-books-data |
 | GET | `/predictions/predict` | beat-books-model |
 
+## Troubleshooting
+
+### Windows: `Dev` vs `dev` ref collision
+
+On case-insensitive filesystems (Windows, some macOS configs), `git fetch` may fail with:
+
+```
+error: cannot lock ref 'refs/remotes/origin/dev': 'refs/remotes/origin/Dev' exists
+```
+
+This happens because the remote has both `Dev` and `dev` branches, which collide locally.
+
+**Fix (safe, local-clone only):**
+
+```bash
+git refs migrate --ref-format=reftable
+```
+
+This converts your local ref storage to a case-sensitive format. It does not affect the remote.
+
 ## Related Repos
 
 - [beat-books-data](https://github.com/Kame4201/beat-books-data) — Data ingestion & storage

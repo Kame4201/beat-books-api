@@ -1,46 +1,13 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
-from typing import Optional, List, Literal
+from typing import Optional, List, Literal, Union
 import httpx
 from src.core.config import settings
+from src.core.teams import VALID_NFL_TEAMS
+from src.core.rate_limit import limiter
+from src.core.client import data_client
 
 router = APIRouter()
-
-# Valid NFL team abbreviations (32 teams)
-VALID_NFL_TEAMS = {
-    "cardinals",
-    "falcons",
-    "ravens",
-    "bills",
-    "panthers",
-    "bears",
-    "bengals",
-    "browns",
-    "cowboys",
-    "broncos",
-    "lions",
-    "packers",
-    "texans",
-    "colts",
-    "jaguars",
-    "chiefs",
-    "raiders",
-    "chargers",
-    "rams",
-    "dolphins",
-    "vikings",
-    "patriots",
-    "saints",
-    "giants",
-    "jets",
-    "eagles",
-    "steelers",
-    "49ers",
-    "seahawks",
-    "buccaneers",
-    "titans",
-    "commanders",
-}
 
 
 # Response Models
@@ -90,6 +57,43 @@ class ModelsListResponse(BaseModel):
     models: List[ModelInfo]
 
 
+class BatchGameInput(BaseModel):
+    """A single game matchup for batch prediction."""
+
+    team1: str
+    team2: str
+
+
+class BatchRequest(BaseModel):
+    """Request body for batch predictions."""
+
+    games: List[BatchGameInput] = Field(..., max_length=16)
+
+
+class BatchPredictionError(BaseModel):
+    """Error detail for a single game in a batch."""
+
+    team1: str
+    team2: str
+    error: str
+
+
+class BatchPredictionItem(BaseModel):
+    """Result for a single game — either a prediction or an error."""
+
+    prediction: Optional[PredictionResponse] = None
+    error: Optional[BatchPredictionError] = None
+
+
+class BatchPredictionResponse(BaseModel):
+    """Response for batch predictions with partial-failure support."""
+
+    results: List[BatchPredictionItem]
+    total: int
+    succeeded: int
+    failed: int
+
+
 def validate_team_name(team: str) -> str:
     """Validate and normalize NFL team name."""
     normalized = team.lower().strip()
@@ -102,7 +106,9 @@ def validate_team_name(team: str) -> str:
 
 
 @router.get("/predict", response_model=PredictionResponse)
+@limiter.limit(settings.RATE_LIMIT_PREDICTIONS)
 async def predict_game(
+    request: Request,
     team1: str = Query(..., description="Home team name (NFL team abbreviation)"),
     team2: str = Query(..., description="Away team name (NFL team abbreviation)"),
 ):
@@ -230,3 +236,122 @@ async def list_models():
         raise HTTPException(
             status_code=504, detail="Model service timeout. Request took too long."
         )
+
+
+async def _predict_single(
+    home_team: str, away_team: str
+) -> Union[PredictionResponse, BatchPredictionError]:
+    """Call model service for a single game prediction."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.MODEL_SERVICE_URL}/predict",
+                params={"team1": home_team, "team2": away_team},
+                timeout=10.0,
+            )
+            response.raise_for_status()
+            return PredictionResponse(**response.json())
+    except (httpx.ConnectError, httpx.TimeoutException, httpx.HTTPStatusError) as e:
+        msg = str(e)
+        if isinstance(e, httpx.ConnectError):
+            msg = "Model service unavailable"
+        elif isinstance(e, httpx.TimeoutException):
+            msg = "Model service timeout"
+        return BatchPredictionError(team1=home_team, team2=away_team, error=msg)
+
+
+@router.post("/batch", response_model=BatchPredictionResponse)
+async def predict_batch(batch: BatchRequest):
+    """
+    Predict outcomes for multiple games in a single request.
+
+    Handles partial failures — if some games fail, successes are still returned.
+    """
+    if not batch.games:
+        return BatchPredictionResponse(results=[], total=0, succeeded=0, failed=0)
+
+    results: List[BatchPredictionItem] = []
+    succeeded = 0
+    failed = 0
+
+    for game in batch.games:
+        try:
+            home = validate_team_name(game.team1)
+            away = validate_team_name(game.team2)
+        except HTTPException as e:
+            results.append(
+                BatchPredictionItem(
+                    error=BatchPredictionError(
+                        team1=game.team1, team2=game.team2, error=str(e.detail)
+                    )
+                )
+            )
+            failed += 1
+            continue
+
+        result = await _predict_single(home, away)
+        if isinstance(result, PredictionResponse):
+            results.append(BatchPredictionItem(prediction=result))
+            succeeded += 1
+        else:
+            results.append(BatchPredictionItem(error=result))
+            failed += 1
+
+    return BatchPredictionResponse(
+        results=results,
+        total=len(batch.games),
+        succeeded=succeeded,
+        failed=failed,
+    )
+
+
+@router.get("/week/{season}/{week}", response_model=BatchPredictionResponse)
+async def predict_week(season: int, week: int):
+    """
+    Predict all games for a given NFL week.
+
+    Fetches schedule from beat-books-data, then predicts each game.
+    """
+    schedule = await data_client.get(
+        "/stats/games", params={"season": season, "week": week}
+    )
+
+    games = schedule.get("data", schedule) if isinstance(schedule, dict) else schedule
+    if isinstance(games, dict):
+        games = games.get("games", [])
+
+    if not games:
+        return BatchPredictionResponse(results=[], total=0, succeeded=0, failed=0)
+
+    results: List[BatchPredictionItem] = []
+    succeeded = 0
+    failed = 0
+
+    for game in games:
+        home = game.get("home_team", "")
+        away = game.get("away_team", "")
+        if not home or not away:
+            results.append(
+                BatchPredictionItem(
+                    error=BatchPredictionError(
+                        team1=home, team2=away, error="Missing team in schedule data"
+                    )
+                )
+            )
+            failed += 1
+            continue
+
+        result = await _predict_single(home, away)
+        if isinstance(result, PredictionResponse):
+            results.append(BatchPredictionItem(prediction=result))
+            succeeded += 1
+        else:
+            results.append(BatchPredictionItem(error=result))
+            failed += 1
+
+    return BatchPredictionResponse(
+        results=results,
+        total=len(games),
+        succeeded=succeeded,
+        failed=failed,
+    )

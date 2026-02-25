@@ -1,4 +1,5 @@
 """E2E tests for stats routes."""
+
 import pytest
 from unittest.mock import AsyncMock, patch
 
@@ -9,7 +10,9 @@ class TestStatsRoutes:
     @pytest.mark.asyncio
     async def test_get_team_stats_success(self, client):
         """Test getting team stats with valid parameters."""
-        with patch("src.routes.stats.data_client.get", new_callable=AsyncMock) as mock_get:
+        with patch(
+            "src.routes.stats.data_client.get", new_callable=AsyncMock
+        ) as mock_get:
             mock_get.return_value = {
                 "data": {"team": "KC", "season": 2024, "wins": 14, "losses": 3},
                 "pagination": None,
@@ -32,7 +35,9 @@ class TestStatsRoutes:
     @pytest.mark.asyncio
     async def test_get_players_success(self, client):
         """Test getting players with filtering."""
-        with patch("src.routes.stats.data_client.get", new_callable=AsyncMock) as mock_get:
+        with patch(
+            "src.routes.stats.data_client.get", new_callable=AsyncMock
+        ) as mock_get:
             mock_get.return_value = {
                 "data": [
                     {"name": "Patrick Mahomes", "position": "QB", "team": "KC"},
@@ -70,7 +75,9 @@ class TestStatsRoutes:
     @pytest.mark.asyncio
     async def test_get_games_success(self, client):
         """Test getting games."""
-        with patch("src.routes.stats.data_client.get", new_callable=AsyncMock) as mock_get:
+        with patch(
+            "src.routes.stats.data_client.get", new_callable=AsyncMock
+        ) as mock_get:
             mock_get.return_value = {
                 "data": [
                     {"home_team": "KC", "away_team": "BUF", "week": 1, "season": 2024},
@@ -90,7 +97,9 @@ class TestStatsRoutes:
     @pytest.mark.asyncio
     async def test_get_games_without_week(self, client):
         """Test getting all games without week filter."""
-        with patch("src.routes.stats.data_client.get", new_callable=AsyncMock) as mock_get:
+        with patch(
+            "src.routes.stats.data_client.get", new_callable=AsyncMock
+        ) as mock_get:
             mock_get.return_value = {"data": [], "pagination": None}
 
             response = client.get("/games?season=2024")
@@ -107,7 +116,9 @@ class TestStatsRoutes:
     @pytest.mark.asyncio
     async def test_get_standings_success(self, client):
         """Test getting standings."""
-        with patch("src.routes.stats.data_client.get", new_callable=AsyncMock) as mock_get:
+        with patch(
+            "src.routes.stats.data_client.get", new_callable=AsyncMock
+        ) as mock_get:
             mock_get.return_value = {
                 "data": [
                     {"team": "KC", "wins": 14, "losses": 3, "division": "AFC West"},
@@ -128,7 +139,9 @@ class TestStatsRoutes:
     @pytest.mark.asyncio
     async def test_empty_results(self, client):
         """Test handling empty results."""
-        with patch("src.routes.stats.data_client.get", new_callable=AsyncMock) as mock_get:
+        with patch(
+            "src.routes.stats.data_client.get", new_callable=AsyncMock
+        ) as mock_get:
             mock_get.return_value = {"data": [], "pagination": None}
 
             response = client.get("/players?season=2024")
