@@ -110,6 +110,35 @@ class TestPredictEndpoint:
             assert response.status_code == status.HTTP_200_OK
 
 
+    def test_predict_game_alias_abbreviation(self, client):
+        """Test that team abbreviations resolve via alias mapping."""
+        with patch("src.routes.predictions.TEAM_ALIASES", {"kc": "Kansas City Chiefs", "buf": "Buffalo Bills"}):
+            with patch("httpx.AsyncClient.post") as mock_post:
+                mock_response = MagicMock()
+                mock_response.status_code = 200
+                mock_response.json.return_value = {
+                    "home_team": "Kansas City Chiefs",
+                    "away_team": "Buffalo Bills",
+                    "prediction": {
+                        "winner": "Kansas City Chiefs",
+                        "win_probability": 0.62,
+                        "predicted_spread": 0.0,
+                        "confidence": "medium",
+                    },
+                    "model_version": "1.0.0",
+                }
+                mock_response.raise_for_status = MagicMock()
+                mock_post.return_value = mock_response
+
+                response = client.get("/predictions/predict?team1=KC&team2=BUF")
+                assert response.status_code == status.HTTP_200_OK
+                # Verify canonical full names were sent to model
+                call_kwargs = mock_post.call_args
+                body = call_kwargs.kwargs.get("json") or call_kwargs[1].get("json")
+                assert body["home_team"] == "Kansas City Chiefs"
+                assert body["away_team"] == "Buffalo Bills"
+
+
 class TestBacktestEndpoint:
     """Tests for GET /predictions/backtest/{run_id} endpoint."""
 

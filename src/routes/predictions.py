@@ -1,8 +1,12 @@
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 from typing import Optional, List, Literal
+import json
+import logging
 import httpx
 from src.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -41,6 +45,24 @@ VALID_NFL_TEAMS = {
     "titans",
     "commanders",
 }
+
+
+def _load_team_aliases() -> dict[str, str]:
+    """Load team alias mapping from JSON file if configured."""
+    if not settings.TEAM_ALIASES_PATH:
+        return {}
+    try:
+        with open(settings.TEAM_ALIASES_PATH) as f:
+            aliases = json.load(f)
+        logger.info("Loaded %d team aliases from %s", len(aliases), settings.TEAM_ALIASES_PATH)
+        return {k.lower().strip(): v for k, v in aliases.items()}
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logger.warning("Could not load team aliases from %s: %s", settings.TEAM_ALIASES_PATH, e)
+        return {}
+
+
+# Loaded once at module import; maps alias → canonical full name
+TEAM_ALIASES: dict[str, str] = _load_team_aliases()
 
 
 # Response Models
@@ -91,14 +113,28 @@ class ModelsListResponse(BaseModel):
 
 
 def validate_team_name(team: str) -> str:
-    """Validate and normalize NFL team name."""
+    """Validate and normalize NFL team name.
+
+    If TEAM_ALIASES_PATH is configured, resolves aliases (abbreviations,
+    city names, full names) to canonical full names for the model service.
+    Falls back to the hardcoded VALID_NFL_TEAMS set otherwise.
+    """
     normalized = team.lower().strip()
-    if normalized not in VALID_NFL_TEAMS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid team name: '{team}'. Must be a valid NFL team abbreviation (e.g., chiefs, eagles, patriots).",
-        )
-    return normalized
+
+    # Try alias lookup first (maps any form → canonical full name)
+    if TEAM_ALIASES:
+        canonical = TEAM_ALIASES.get(normalized)
+        if canonical:
+            return canonical
+
+    # Fall back to hardcoded validation (backward compat without alias file)
+    if normalized in VALID_NFL_TEAMS:
+        return normalized
+
+    raise HTTPException(
+        status_code=400,
+        detail=f"Invalid team name: '{team}'. Use a team nickname (e.g., chiefs), abbreviation (e.g., KC), or full name (e.g., Kansas City Chiefs).",
+    )
 
 
 @router.get("/predict")

@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     DATA_SERVICE_URL: str = "http://localhost:8001"
     MODEL_SERVICE_URL: str = "http://localhost:8002"
 
+    # Team alias mapping (JSON file path, provided by infra via volume mount)
+    TEAM_ALIASES_PATH: str = ""
+
     # App
     API_HOST: str = "0.0.0.0"  # nosec B104 - intentional for containerized deployment
     API_PORT: int = 8000
