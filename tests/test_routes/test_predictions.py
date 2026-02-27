@@ -7,9 +7,9 @@ import httpx
 class TestPredictEndpoint:
     """Tests for GET /predictions/predict endpoint."""
 
-    @patch("httpx.AsyncClient.get")
+    @patch("httpx.AsyncClient.post")
     @pytest.mark.asyncio
-    async def test_predict_game_success(self, mock_get, client):
+    async def test_predict_game_success(self, mock_post, client):
         """Test successful game prediction."""
         # Mock response from beat-books-model service
         mock_response = MagicMock()
@@ -17,17 +17,16 @@ class TestPredictEndpoint:
         mock_response.json.return_value = {
             "home_team": "chiefs",
             "away_team": "eagles",
-            "home_win_probability": 0.62,
-            "away_win_probability": 0.38,
-            "predicted_spread": -3.5,
-            "model_version": "v1.0",
-            "feature_version": "v1.0",
-            "edge_vs_market": 0.04,
-            "recommended_bet_size": 0.025,
-            "bet_recommendation": "BET"
+            "prediction": {
+                "winner": "chiefs",
+                "win_probability": 0.62,
+                "predicted_spread": -3.5,
+                "confidence": "medium",
+            },
+            "model_version": "1.0.0",
         }
         mock_response.raise_for_status = MagicMock()
-        mock_get.return_value = mock_response
+        mock_post.return_value = mock_response
 
         # Make request
         response = client.get("/predictions/predict?team1=chiefs&team2=eagles")
@@ -37,8 +36,7 @@ class TestPredictEndpoint:
         data = response.json()
         assert data["home_team"] == "chiefs"
         assert data["away_team"] == "eagles"
-        assert data["home_win_probability"] == 0.62
-        assert data["bet_recommendation"] == "BET"
+        assert data["prediction"]["winner"] == "chiefs"
 
     def test_predict_game_invalid_team1(self, client):
         """Test prediction with invalid home team name."""
@@ -66,22 +64,22 @@ class TestPredictEndpoint:
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    @patch("httpx.AsyncClient.get")
+    @patch("httpx.AsyncClient.post")
     @pytest.mark.asyncio
-    async def test_predict_game_service_unavailable(self, mock_get, client):
+    async def test_predict_game_service_unavailable(self, mock_post, client):
         """Test prediction when model service is unavailable."""
-        mock_get.side_effect = httpx.ConnectError("Connection refused")
+        mock_post.side_effect = httpx.ConnectError("Connection refused")
 
         response = client.get("/predictions/predict?team1=chiefs&team2=eagles")
 
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
         assert "Model service unavailable" in response.json()["detail"]
 
-    @patch("httpx.AsyncClient.get")
+    @patch("httpx.AsyncClient.post")
     @pytest.mark.asyncio
-    async def test_predict_game_service_timeout(self, mock_get, client):
+    async def test_predict_game_service_timeout(self, mock_post, client):
         """Test prediction when model service times out."""
-        mock_get.side_effect = httpx.TimeoutException("Request timeout")
+        mock_post.side_effect = httpx.TimeoutException("Request timeout")
 
         response = client.get("/predictions/predict?team1=chiefs&team2=eagles")
 
@@ -90,23 +88,22 @@ class TestPredictEndpoint:
 
     def test_predict_game_case_insensitive(self, client):
         """Test that team names are case-insensitive."""
-        with patch("httpx.AsyncClient.get") as mock_get:
+        with patch("httpx.AsyncClient.post") as mock_post:
             mock_response = MagicMock()
             mock_response.status_code = 200
             mock_response.json.return_value = {
                 "home_team": "chiefs",
                 "away_team": "eagles",
-                "home_win_probability": 0.62,
-                "away_win_probability": 0.38,
-                "predicted_spread": -3.5,
-                "model_version": "v1.0",
-                "feature_version": "v1.0",
-                "edge_vs_market": 0.04,
-                "recommended_bet_size": 0.025,
-                "bet_recommendation": "BET"
+                "prediction": {
+                    "winner": "chiefs",
+                    "win_probability": 0.62,
+                    "predicted_spread": -3.5,
+                    "confidence": "medium",
+                },
+                "model_version": "1.0.0",
             }
             mock_response.raise_for_status = MagicMock()
-            mock_get.return_value = mock_response
+            mock_post.return_value = mock_response
 
             # Test with uppercase
             response = client.get("/predictions/predict?team1=CHIEFS&team2=EAGLES")

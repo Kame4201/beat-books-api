@@ -101,7 +101,7 @@ def validate_team_name(team: str) -> str:
     return normalized
 
 
-@router.get("/predict", response_model=PredictionResponse)
+@router.get("/predict")
 async def predict_game(
     team1: str = Query(..., description="Home team name (NFL team abbreviation)"),
     team2: str = Query(..., description="Away team name (NFL team abbreviation)"),
@@ -126,12 +126,12 @@ async def predict_game(
     home_team = validate_team_name(team1)
     away_team = validate_team_name(team2)
 
-    # Delegate to beat-books-model service
+    # Delegate to beat-books-model service (POST /predictions/predict)
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{settings.MODEL_SERVICE_URL}/predict",
-                params={"team1": home_team, "team2": away_team},
+            response = await client.post(
+                f"{settings.MODEL_SERVICE_URL}/predictions/predict",
+                json={"home_team": home_team, "away_team": away_team},
                 timeout=10.0,
             )
             response.raise_for_status()
